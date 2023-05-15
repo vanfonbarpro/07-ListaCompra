@@ -6,12 +6,15 @@ import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.cieep.a07_listacompra.MainActivity;
 import com.cieep.a07_listacompra.R;
 import com.cieep.a07_listacompra.modelos.ProductModel;
 
@@ -26,6 +29,8 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
 
     private NumberFormat numberFormat;
 
+    private MainActivity main;
+
 
 
     public ProductosModelAdapter(List<ProductModel> objects, int resource, Context context) {
@@ -33,6 +38,7 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
         this.resource = resource;
         this.context = context;
         this.numberFormat = NumberFormat.getCurrencyInstance();
+        this.main = (MainActivity) context;
     }
 
     @NonNull
@@ -59,6 +65,13 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
             }
         });
 
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                editProducto(p, holder.getAdapterPosition()).show();
+            }
+        });
+
     }
 
 
@@ -67,6 +80,45 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
         return objects.size();
     }
 
+
+    private AlertDialog editProducto(ProductModel p, int position){
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setCancelable(false);
+        builder.setTitle(p.getNombre());
+
+        View productoView = LayoutInflater.from(context).inflate(R.layout.activity_add_producto, null);
+
+        EditText txtNombre = productoView.findViewById(R.id.txtNombreProductoAdd);
+        // ni esta visible ni ocupa el espacio
+        txtNombre.setVisibility(View.GONE);
+
+        Button btn = productoView.findViewById(R.id.btnAgregarProductoAdd);
+        btn.setVisibility(View.GONE);
+
+        EditText txtCantidad = productoView.findViewById(R.id.txtCantidadProductoAdd);
+        txtCantidad.setText(String.valueOf(p.getCantidad()));
+
+        EditText txtPrecio = productoView.findViewById(R.id.txtPrecioProductoAdd);
+        txtPrecio.setText(String.valueOf(p.getPrecio()));
+
+        builder.setView(productoView);
+
+        builder.setNegativeButton("CANCELAR", null);
+        builder.setPositiveButton("MODIFICAR", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if(!txtCantidad.getText().toString().isEmpty()
+                && !txtPrecio.getText().toString().isEmpty()){
+                    p.setCantidad(Integer.parseInt(txtCantidad.getText().toString()));
+                    p.setPrecio(Float.parseFloat(txtPrecio.getText().toString()));
+                    notifyItemChanged(position);
+                    main.calculaValores();
+                }
+            }
+        });
+
+        return builder.create();
+    }
 
 
     private AlertDialog confirmDelete(ProductModel p, int position){
@@ -79,6 +131,7 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
             public void onClick(DialogInterface dialogInterface, int i) {
                 objects.remove(p);
                 notifyItemRemoved(position);
+                main.calculaValores();
             }
         });
 
@@ -100,4 +153,6 @@ public class ProductosModelAdapter extends RecyclerView.Adapter<ProductosModelAd
             btnEliminar = itemView.findViewById(R.id.btnEliminarProductoCard);
         }
     }
+
+
 }
